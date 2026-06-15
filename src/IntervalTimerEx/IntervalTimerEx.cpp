@@ -8,13 +8,16 @@ IntervalTimerEx::~IntervalTimerEx()
 
 void IntervalTimerEx::end()
 {
-    callbacks[index] = nullptr;
     IntervalTimer::end();
+    uint32_t primask;
+    asm volatile("mrs %0, primask\n\t cpsid i" : "=r"(primask)::"memory");
+    callbacks[index] = nullptr;
+    asm volatile("msr primask, %0" ::"r"(primask) : "memory");
 }
 
 
 // generate and preset the callback storage
-callback_t IntervalTimerEx::callbacks[4]{
+IntervalTimerEx::callback_t IntervalTimerEx::callbacks[4]{
     nullptr,
     nullptr,
     nullptr,
@@ -23,7 +26,7 @@ callback_t IntervalTimerEx::callbacks[4]{
 
 #if defined (USE_CPP11_CALLBACKS)
 
-relay_t IntervalTimerEx::relays[4]{
+IntervalTimerEx::relay_t IntervalTimerEx::relays[4]{
     [] { callbacks[0](); },
     [] { callbacks[1](); },
     [] { callbacks[2](); },
@@ -33,7 +36,7 @@ relay_t IntervalTimerEx::relays[4]{
 #else
 
 // generate the static array of relay functions
-relay_t IntervalTimerEx::relays[4]{
+IntervalTimerEx::relay_t IntervalTimerEx::relays[4]{
     [] { callbacks[0](states[0]); },
     [] { callbacks[1](states[1]); },
     [] { callbacks[2](states[2]); },
