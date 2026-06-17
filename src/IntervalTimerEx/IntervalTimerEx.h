@@ -5,21 +5,18 @@
 #define USE_CPP11_CALLBACKS                    // comment out if you want to use the traditional void pointer pattern to pass state to callbacks
 
 #if defined(USE_CPP11_CALLBACKS)
-  #include <functional>
+#include <functional>
+    using callback_t = std::function<void()>;
+    using relay_t = void (*)();
+
+#else
+    using callback_t = void (*)(void*);
+    using relay_t = void (*)();
 #endif
 
 
 class IntervalTimerEx : public IntervalTimer
 {
- public:
-    #if defined(USE_CPP11_CALLBACKS)
-        using callback_t = std::function<void()>;
-        using relay_t = void (*)();
-
-    #else
-        using callback_t = void (*)(void*);
-        using relay_t = void (*)();
-    #endif
  public:
     template <typename period_t>               // begin is implemented as template to avoid replication the various versions of IntervalTimer::begin
     #if defined(USE_CPP11_CALLBACKS)
@@ -46,7 +43,7 @@ class IntervalTimerEx : public IntervalTimer
 
  #if defined(USE_CPP11_CALLBACKS)
 template <typename period_t>
-bool IntervalTimerEx::begin(callback_t callback, period_t period)
+bool IntervalTimerEx::begin(std::function<void()> callback, period_t period)
 {
     uint32_t primask;
     asm volatile("mrs %0, primask\n\t cpsid i" : "=r"(primask)::"memory");
